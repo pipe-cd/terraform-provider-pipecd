@@ -41,5 +41,3 @@ Read-Only:
 - `branch` (String)
 - `id` (String)
 - `remote` (String)
-
-

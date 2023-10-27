@@ -39,5 +39,3 @@ Read-Only:
 - `path` (String) The relative path from the root of repository to the application directory.
 - `remote` (String)
 - `repository_id` (String) The repository ID. One the registered repositories in the piped configuration.
-
-

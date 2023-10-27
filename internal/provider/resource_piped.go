@@ -46,6 +46,7 @@ type (
 		ID          types.String `tfsdk:"id"`
 		Name        types.String `tfsdk:"name"`
 		Description types.String `tfsdk:"description"`
+		APIKey      types.String `tfsdk:"api_key"`
 	}
 )
 
@@ -66,6 +67,7 @@ func (p *PipedResource) ImportState(ctx context.Context, req resource.ImportStat
 		ID:          types.StringValue(req.ID),
 		Name:        types.StringValue(getResp.Piped.Name),
 		Description: types.StringValue(getResp.Piped.Desc),
+		APIKey:      types.StringUnknown(),
 	}
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -95,6 +97,13 @@ func (p *PipedResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 				Description: "The description of the piped.",
 				Optional:    true,
 				Computed:    true,
+			},
+			"api_key": schema.StringAttribute{
+				Description: "The API key of the piped.",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 	}
@@ -136,6 +145,7 @@ func (p *PipedResource) Create(ctx context.Context, req resource.CreateRequest, 
 		ID:          types.StringValue(registerResp.Id),
 		Name:        types.StringValue(piped.Name),
 		Description: types.StringValue(piped.Desc),
+		APIKey:      types.StringValue(registerResp.Key),
 	}
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
