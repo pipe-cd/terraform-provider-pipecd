@@ -30,6 +30,7 @@ func TestAccResourcePiped(t *testing.T) {
 	t.Parallel()
 
 	const pipedID = "test_piped_id"
+	const pipedAPIKey = "test_piped_api_key"
 
 	piped := &model.Piped{
 		Id:   pipedID,
@@ -41,7 +42,7 @@ func TestAccResourcePiped(t *testing.T) {
 		Name: piped.Name,
 		Desc: piped.Desc,
 	}
-	registerResp := &apiservice.RegisterPipedResponse{Id: pipedID}
+	registerResp := &apiservice.RegisterPipedResponse{Id: pipedID, Key: pipedAPIKey}
 
 	updateReq := &apiservice.UpdatePipedRequest{
 		PipedId: pipedID,
@@ -69,8 +70,10 @@ func TestAccResourcePiped(t *testing.T) {
 			{
 				Config: testAccResourcePiped(registerReq.Name, registerReq.Desc),
 				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("pipecd_piped.test", "id", pipedID),
 					resource.TestCheckResourceAttr("pipecd_piped.test", "name", registerReq.Name),
 					resource.TestCheckResourceAttr("pipecd_piped.test", "description", registerReq.Desc),
+					resource.TestCheckResourceAttr("pipecd_piped.test", "api_key", pipedAPIKey),
 				),
 			},
 		},

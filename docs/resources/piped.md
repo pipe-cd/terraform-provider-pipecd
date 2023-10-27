@@ -25,6 +25,5 @@ PipeCD piped resource.
 
 ### Read-Only
 
+- `api_key` (String) The API key of the piped.
 - `id` (String) The ID of piped that should handle this application.
-
-
