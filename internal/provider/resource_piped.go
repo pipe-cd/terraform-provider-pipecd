@@ -101,6 +101,7 @@ func (p *PipedResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 			"api_key": schema.StringAttribute{
 				Description: "The API key of the piped.",
 				Computed:    true,
+				Sensitive:   true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
