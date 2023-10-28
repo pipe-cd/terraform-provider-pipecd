@@ -148,7 +148,7 @@ func (p *PipedResource) Create(ctx context.Context, req resource.CreateRequest, 
 		Description: types.StringValue(piped.Desc),
 		APIKey:      types.StringValue(registerResp.Key),
 	}
-	diags = resp.State.Set(ctx, plan)
+	diags = resp.State.Set(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 }
 
@@ -188,7 +188,7 @@ func (p *PipedResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		return
 	}
 
-	diags = resp.State.Set(ctx, plan)
+	diags = resp.State.Set(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 }
 

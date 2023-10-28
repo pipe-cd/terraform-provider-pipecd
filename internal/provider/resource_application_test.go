@@ -32,9 +32,7 @@ func TestAccResourceApplication(t *testing.T) {
 
 	appGit := &model.ApplicationGitPath{
 		Repo: &model.ApplicationGitRepository{
-			Id:     "repo_id",
-			Remote: "repo_remote",
-			Branch: "main",
+			Id: "repo_id",
 		},
 		Path:           "path/to/config",
 		ConfigFilename: "testapp.pipecd.yaml",
@@ -87,8 +85,6 @@ func TestAccResourceApplication(t *testing.T) {
 					resource.TestCheckResourceAttr("pipecd_application.test", "platform_provider", "test_provider"),
 					resource.TestCheckResourceAttr("pipecd_application.test", "description", "test description"),
 					resource.TestCheckResourceAttr("pipecd_application.test", "git.repository_id", "repo_id"),
-					resource.TestCheckResourceAttr("pipecd_application.test", "git.remote", "repo_remote"),
-					resource.TestCheckResourceAttr("pipecd_application.test", "git.branch", "main"),
 					resource.TestCheckResourceAttr("pipecd_application.test", "git.path", "path/to/config"),
 					resource.TestCheckResourceAttr("pipecd_application.test", "git.filename", "testapp.pipecd.yaml"),
 				),
@@ -107,8 +103,6 @@ resource "pipecd_application" "test" {
 	description = "test description"
 	git = {
 		repository_id = "repo_id"
-		remote = "repo_remote"
-		branch = "main"
 		path = "path/to/config"
 		filename = "testapp.pipecd.yaml"
 	}
