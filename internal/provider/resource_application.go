@@ -25,6 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	api "github.com/pipe-cd/pipecd/pkg/app/server/service/apiservice"
 	"github.com/pipe-cd/pipecd/pkg/model"
@@ -56,8 +57,6 @@ type (
 
 	applicationResourceGitModel struct {
 		RepositoryID types.String `tfsdk:"repository_id"`
-		Remote       types.String `tfsdk:"remote"`
-		Branch       types.String `tfsdk:"branch"`
 		Path         types.String `tfsdk:"path"`
 		Filename     types.String `tfsdk:"filename"`
 	}
@@ -85,8 +84,6 @@ func (a *ApplicationResource) ImportState(ctx context.Context, req resource.Impo
 		Description:      types.StringValue(getResp.Application.Description),
 		Git: applicationResourceGitModel{
 			RepositoryID: types.StringValue(getResp.Application.GitPath.Repo.Id),
-			Remote:       types.StringValue(getResp.Application.GitPath.Repo.Remote),
-			Branch:       types.StringValue(getResp.Application.GitPath.Repo.Branch),
 			Path:         types.StringValue(getResp.Application.GitPath.Path),
 			Filename:     types.StringValue(getResp.Application.GitPath.ConfigFilename),
 		},
@@ -161,18 +158,6 @@ func (a *ApplicationResource) Schema(_ context.Context, _ resource.SchemaRequest
 							stringplanmodifier.RequiresReplace(),
 						},
 					},
-					"remote": schema.StringAttribute{
-						Optional: true,
-						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.RequiresReplace(),
-						},
-					},
-					"branch": schema.StringAttribute{
-						Optional: true,
-						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.RequiresReplace(),
-						},
-					},
 					"path": schema.StringAttribute{
 						Description: "The relative path from the root of repository to the application directory.",
 						Required:    true,
@@ -195,9 +180,7 @@ func (a *ApplicationResource) Schema(_ context.Context, _ resource.SchemaRequest
 func (a *applicationResourceModel) application() *model.Application {
 	git := &model.ApplicationGitPath{
 		Repo: &model.ApplicationGitRepository{
-			Id:     a.Git.RepositoryID.ValueString(),
-			Remote: a.Git.Remote.ValueString(),
-			Branch: a.Git.Branch.ValueString(),
+			Id: a.Git.RepositoryID.ValueString(),
 		},
 		Path:           a.Git.Path.ValueString(),
 		ConfigFilename: a.Git.Filename.ValueString(),
@@ -254,6 +237,8 @@ func (a *ApplicationResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
+	tflog.Debug(ctx, "AddApplication response", map[string]interface{}{"response_fields": getResp})
+
 	state := applicationResourceModel{
 		ID:               types.StringValue(addResp.ApplicationId),
 		Name:             types.StringValue(getResp.Application.Name),
@@ -263,8 +248,6 @@ func (a *ApplicationResource) Create(ctx context.Context, req resource.CreateReq
 		Description:      types.StringValue(getResp.Application.Description),
 		Git: applicationResourceGitModel{
 			RepositoryID: types.StringValue(getResp.Application.GitPath.Repo.Id),
-			Remote:       types.StringValue(getResp.Application.GitPath.Repo.Remote),
-			Branch:       types.StringValue(getResp.Application.GitPath.Repo.Branch),
 			Path:         types.StringValue(getResp.Application.GitPath.Path),
 			Filename:     types.StringValue(getResp.Application.GitPath.ConfigFilename),
 		},
