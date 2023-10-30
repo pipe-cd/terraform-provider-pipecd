@@ -10,8 +10,6 @@ resource "pipecd_application" "main" {
   piped_id          = data.pipecd_piped.main.id
   git = {
     repository_id = "examples"
-    remote        = "git@github.com:pipe-cd/examples.git"
-    branch        = "master"
     path          = "cloudrun/simple"
     filename      = "app.pipecd.yaml"
   }
