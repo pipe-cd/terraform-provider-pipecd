@@ -169,7 +169,7 @@ func (a *ApplicationResource) Schema(_ context.Context, _ resource.SchemaRequest
 						Description: "The configuration file name. (default \"app.pipecd.yaml\")",
 						Optional:    true,
 						Computed:    true,
-						Default:     stringdefault.StaticString("app.piped.yaml"),
+						Default:     stringdefault.StaticString("app.pipecd.yaml"),
 					},
 				},
 			},
