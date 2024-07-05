@@ -1,7 +1,6 @@
 module github.com/pipe-cd/terraform-provider-pipecd
 
 go 1.22
-
 require (
 	github.com/golang/mock v1.6.0
 	github.com/hashicorp/terraform-plugin-docs v0.19.4
@@ -10,7 +9,7 @@ require (
 	github.com/hashicorp/terraform-plugin-go v0.23.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-testing v1.8.0
-	github.com/pipe-cd/pipecd v0.47.1
+	github.com/pipe-cd/pipecd v0.48.0
 	google.golang.org/grpc v1.63.2
 )
 
