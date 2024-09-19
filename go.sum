@@ -168,8 +168,8 @@ github.com/mitchellh/reflectwalk v1.0.2 h1:G2LzWKi524PWgd3mLHV8Y5k7s6XUvT0Gef6zx
 github.com/mitchellh/reflectwalk v1.0.2/go.mod h1:mSTlrgnPZtwu0c4WaC2kGObEpuNDbx0jmZXqmk4esnw=
 github.com/oklog/run v1.0.0 h1:Ru7dDtJNOyC66gQ5dQmaCa0qIsAUFY3sFpK1Xk8igrw=
 github.com/oklog/run v1.0.0/go.mod h1:dlhp/R75TPv97u0XWUtDeV/lRKWPKSdTuV0TZvrmrQA=
-github.com/pipe-cd/pipecd v0.48.8 h1:8gkiIW5afhLrEaYYz9PRkn6d4GfmfdnExbgaMvOdEZs=
-github.com/pipe-cd/pipecd v0.48.8/go.mod h1:tAMWt7qfVcI52w3WCagbtd2AiDZYp9xQDEyYA0jH2do=
+github.com/pipe-cd/pipecd v0.48.9 h1:0TJlhW56oFyl23qDGJsl3Fal+6EEZe+4lC9PyhDZ5kw=
+github.com/pipe-cd/pipecd v0.48.9/go.mod h1:tAMWt7qfVcI52w3WCagbtd2AiDZYp9xQDEyYA0jH2do=
 github.com/pjbgf/sha1cd v0.3.0 h1:4D5XXmUUBUl/xQ6IjCkEAbqXskkq/4O7LmGn0AqMDs4=
 github.com/pjbgf/sha1cd v0.3.0/go.mod h1:nZ1rrWOcGJ5uZgEEVL1VUM9iRQiZvWdbZjkKyFzPPsI=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
