@@ -12,7 +12,7 @@ require (
 	github.com/hashicorp/terraform-plugin-go v0.25.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-testing v1.11.0
-	github.com/pipe-cd/pipecd v0.49.4
+	github.com/pipe-cd/pipecd v0.50.0
 	google.golang.org/grpc v1.68.0
 )
 
