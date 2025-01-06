@@ -54,6 +54,7 @@ func (p *PipedResource) ImportState(ctx context.Context, req resource.ImportStat
 	getReq := &api.GetPipedRequest{
 		PipedId: req.ID,
 	}
+
 	getResp, err := p.c.GetPiped(ctx, getReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -215,8 +216,6 @@ func (p *PipedResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 		)
 		return
 	}
-
-	resp.State.RemoveResource(ctx)
 }
 
 func (p *PipedResource) Configure(_ context.Context, req resource.ConfigureRequest, _ *resource.ConfigureResponse) {
