@@ -44,8 +44,8 @@ linters:
     - containedctx
     # Checks that sentinel errors are prefixed with the Err and error types are suffixed with the Error.
     - errname
-    # checks for pointers to enclosing loop variables
-    - exportloopref
+    # A linter detects places where loop variables are copied.
+    - copyloopvar
     # Gofumpt checks whether code was gofumpt-ed.
     - gofumpt
     # Reports long lines
@@ -64,8 +64,8 @@ linters:
     - revive
     # Stylecheck is a replacement for golint
     - stylecheck
-    # tenv is analyzer that detects using os.Setenv instead of t.Setenv since Go1.17
-    - tenv
+    # Reports uses of functions with replacement inside the testing package.
+    - usetesting
 
 issues:
   exclude-use-default: true
