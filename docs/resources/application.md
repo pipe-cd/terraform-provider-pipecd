@@ -41,6 +41,4 @@ Required:
 
 Optional:
 
-- `branch` (String)
 - `filename` (String) The configuration file name. (default "app.pipecd.yaml")
-- `remote` (String)
