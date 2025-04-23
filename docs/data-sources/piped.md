@@ -20,7 +20,8 @@ PipeCD pied data source.
 - `description` (String)
 - `id` (String) The ID of this resource.
 - `name` (String)
-- `platform_providers` (Attributes List) (see [below for nested schema](#nestedatt--platform_providers))
+- `platform_providers` (Attributes List, Deprecated) (see [below for nested schema](#nestedatt--platform_providers))
+- `plugins` (Attributes List) The list of plugins that this piped uses. (see [below for nested schema](#nestedatt--plugins))
 - `project_id` (String)
 - `repositories` (Attributes List) (see [below for nested schema](#nestedatt--repositories))
 
@@ -31,6 +32,15 @@ Read-Only:
 
 - `name` (String)
 - `type` (String)
+
+
+<a id="nestedatt--plugins"></a>
+### Nested Schema for `plugins`
+
+Read-Only:
+
+- `deploy_targets` (List of String) The list of deploy targets that this plugin uses.
+- `name` (String) The name of the plugin.
 
 
 <a id="nestedatt--repositories"></a>

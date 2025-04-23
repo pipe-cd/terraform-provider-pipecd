@@ -16,6 +16,7 @@ package provider
 
 import (
 	"context"
+	"sort"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -39,14 +40,15 @@ type applicationDataSource struct {
 
 type (
 	applicationDataSourceModel struct {
-		ID               types.String                   `tfsdk:"id"`
-		Name             types.String                   `tfsdk:"name"`
-		PipedID          types.String                   `tfsdk:"piped_id"`
-		ProjectID        types.String                   `tfsdk:"project_id"`
-		Kind             types.String                   `tfsdk:"kind"`
-		PlatformProvider types.String                   `tfsdk:"platform_provider"`
-		Description      types.String                   `tfsdk:"description"`
-		Git              *applicationDataSourceGitModel `tfsdk:"git"`
+		ID               types.String                       `tfsdk:"id"`
+		Name             types.String                       `tfsdk:"name"`
+		PipedID          types.String                       `tfsdk:"piped_id"`
+		ProjectID        types.String                       `tfsdk:"project_id"`
+		Kind             types.String                       `tfsdk:"kind"`
+		PlatformProvider types.String                       `tfsdk:"platform_provider"`
+		Plugins          []applicationDataSourcePluginModel `tfsdk:"plugins"`
+		Description      types.String                       `tfsdk:"description"`
+		Git              *applicationDataSourceGitModel     `tfsdk:"git"`
 	}
 
 	applicationDataSourceGitModel struct {
@@ -55,6 +57,11 @@ type (
 		Branch       types.String `tfsdk:"branch"`
 		Path         types.String `tfsdk:"path"`
 		Filename     types.String `tfsdk:"filename"`
+	}
+
+	applicationDataSourcePluginModel struct {
+		Name          types.String   `tfsdk:"name"`
+		DeployTargets []types.String `tfsdk:"deploy_targets"`
 	}
 )
 
@@ -87,8 +94,26 @@ func (a *applicationDataSource) Schema(_ context.Context, _ datasource.SchemaReq
 				Computed:    true,
 			},
 			"platform_provider": schema.StringAttribute{
-				Description: "The platform provider name. One of the registered providers in the piped configuration. The previous name of this field is cloud-provider.",
+				Description:        "The platform provider name. One of the registered providers in the piped configuration. The previous name of this field is cloud-provider.",
+				Computed:           true,
+				DeprecationMessage: "Use `plugins` instead. This field will be removed in the next major version.",
+			},
+			"plugins": schema.ListNestedAttribute{
+				Description: "The list of plugins that this application uses.",
 				Computed:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Description: "The name of the plugin.",
+							Computed:    true,
+						},
+						"deploy_targets": schema.ListAttribute{
+							Description: "The list of deploy targets that this plugin uses.",
+							Computed:    true,
+							ElementType: types.StringType,
+						},
+					},
+				},
 			},
 			"description": schema.StringAttribute{
 				Description: "The description of the application.",
@@ -151,13 +176,12 @@ func (a *applicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 	}
 
 	state = applicationDataSourceModel{
-		ID:               types.StringValue(getResp.Application.Id),
-		Name:             types.StringValue(getResp.Application.Name),
-		PipedID:          types.StringValue(getResp.Application.PipedId),
-		ProjectID:        types.StringValue(getResp.Application.ProjectId),
-		Kind:             types.StringValue(getResp.Application.Kind.String()),
-		PlatformProvider: types.StringValue(getResp.Application.PlatformProvider),
-		Description:      types.StringValue(getResp.Application.Description),
+		ID:          types.StringValue(getResp.Application.Id),
+		Name:        types.StringValue(getResp.Application.Name),
+		PipedID:     types.StringValue(getResp.Application.PipedId),
+		ProjectID:   types.StringValue(getResp.Application.ProjectId),
+		Kind:        types.StringValue(getResp.Application.Kind.String()),
+		Description: types.StringValue(getResp.Application.Description),
 		Git: &applicationDataSourceGitModel{
 			RepositoryID: types.StringValue(getResp.Application.GitPath.Repo.Id),
 			Remote:       types.StringValue(getResp.Application.GitPath.Repo.Remote),
@@ -165,6 +189,27 @@ func (a *applicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 			Path:         types.StringValue(getResp.Application.GitPath.Path),
 			Filename:     types.StringValue(getResp.Application.GitPath.ConfigFilename),
 		},
+	}
+
+	if getResp.Application.PlatformProvider != "" {
+		state.PlatformProvider = types.StringValue(getResp.Application.PlatformProvider)
+	}
+
+	if len(getResp.Application.DeployTargetsByPlugin) != 0 {
+		state.Plugins = make([]applicationDataSourcePluginModel, 0, len(getResp.Application.DeployTargetsByPlugin))
+		for k, v := range getResp.Application.DeployTargetsByPlugin {
+			deployTargets := make([]types.String, 0, len(v.DeployTargets))
+			for _, dt := range v.DeployTargets {
+				deployTargets = append(deployTargets, types.StringValue(dt))
+			}
+			state.Plugins = append(state.Plugins, applicationDataSourcePluginModel{
+				Name:          types.StringValue(k),
+				DeployTargets: deployTargets,
+			})
+		}
+		sort.Slice(state.Plugins, func(i, j int) bool {
+			return state.Plugins[i].Name.ValueString() < state.Plugins[j].Name.ValueString()
+		})
 	}
 
 	diags = resp.State.Set(ctx, &state)

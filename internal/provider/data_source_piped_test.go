@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"go.uber.org/mock/gomock"
 
 	"github.com/pipe-cd/pipecd/pkg/app/server/service/apiservice"
 	"github.com/pipe-cd/pipecd/pkg/model"
@@ -75,6 +75,82 @@ func TestAccDataSourcePiped(t *testing.T) {
 					resource.TestCheckResourceAttr("data.pipecd_piped.test", "platform_providers.#", "1"),
 					resource.TestCheckResourceAttr("data.pipecd_piped.test", "platform_providers.0.name", "test_provider_name"),
 					resource.TestCheckResourceAttr("data.pipecd_piped.test", "platform_providers.0.type", "test_provider_type"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDataSourcePipedWithBoth(t *testing.T) {
+	t.Parallel()
+
+	const pipedID = "test_piped_id"
+
+	getReq := &apiservice.GetPipedRequest{PipedId: pipedID}
+	getResp := &apiservice.GetPipedResponse{
+		Piped: &model.Piped{
+			Id:        pipedID,
+			Name:      "test_name",
+			Desc:      "test_desc",
+			ProjectId: "test_project",
+			Repositories: []*model.ApplicationGitRepository{
+				{
+					Id:     "test_repo_id",
+					Remote: "test_repo_remote",
+					Branch: "test_repo_branch",
+				},
+			},
+			PlatformProviders: []*model.Piped_PlatformProvider{
+				{
+					Name: "test_provider_name",
+					Type: "test_provider_type",
+				},
+			},
+			Plugins: []*model.Piped_Plugin{
+				{
+					Name: "test_plugin",
+					DeployTargets: []string{
+						"test_target",
+					},
+				},
+				{
+					Name: "test_plugin_2",
+					DeployTargets: []string{
+						"test_target_2",
+					},
+				},
+			},
+		},
+	}
+
+	ctrl := gomock.NewController(t)
+	client := mock.NewMockAPIClient(ctrl)
+	client.EXPECT().GetPiped(gomock.Any(), getReq).Return(getResp, nil).AnyTimes()
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: protoV6ProviderFactories(client),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDataSourcePiped(pipedID),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.pipecd_piped.test", "id", pipedID),
+					resource.TestCheckResourceAttr("data.pipecd_piped.test", "name", "test_name"),
+					resource.TestCheckResourceAttr("data.pipecd_piped.test", "description", "test_desc"),
+					resource.TestCheckResourceAttr("data.pipecd_piped.test", "project_id", "test_project"),
+					resource.TestCheckResourceAttr("data.pipecd_piped.test", "repositories.#", "1"),
+					resource.TestCheckResourceAttr("data.pipecd_piped.test", "repositories.0.id", "test_repo_id"),
+					resource.TestCheckResourceAttr("data.pipecd_piped.test", "repositories.0.remote", "test_repo_remote"),
+					resource.TestCheckResourceAttr("data.pipecd_piped.test", "repositories.0.branch", "test_repo_branch"),
+					resource.TestCheckResourceAttr("data.pipecd_piped.test", "platform_providers.#", "1"),
+					resource.TestCheckResourceAttr("data.pipecd_piped.test", "platform_providers.0.name", "test_provider_name"),
+					resource.TestCheckResourceAttr("data.pipecd_piped.test", "platform_providers.0.type", "test_provider_type"),
+					resource.TestCheckResourceAttr("data.pipecd_piped.test", "plugins.#", "2"),
+					resource.TestCheckResourceAttr("data.pipecd_piped.test", "plugins.0.name", "test_plugin"),
+					resource.TestCheckResourceAttr("data.pipecd_piped.test", "plugins.0.deploy_targets.#", "1"),
+					resource.TestCheckResourceAttr("data.pipecd_piped.test", "plugins.0.deploy_targets.0", "test_target"),
+					resource.TestCheckResourceAttr("data.pipecd_piped.test", "plugins.1.name", "test_plugin_2"),
+					resource.TestCheckResourceAttr("data.pipecd_piped.test", "plugins.1.deploy_targets.#", "1"),
+					resource.TestCheckResourceAttr("data.pipecd_piped.test", "plugins.1.deploy_targets.0", "test_target_2"),
 				),
 			},
 		},

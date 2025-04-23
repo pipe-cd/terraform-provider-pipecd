@@ -26,7 +26,8 @@ PipeCD application resource.
 - `kind` (String) The kind of application.
 - `name` (String) The application name.
 - `piped_id` (String) The ID of piped that should handle this application.
-- `platform_provider` (String) The platform provider name. One of the registered providers in the piped configuration. The previous name of this field is cloud-provider.
+- `platform_provider` (String, Deprecated) The platform provider name. One of the registered providers in the piped configuration. The previous name of this field is cloud-provider.
+- `plugins` (Attributes List) The list of plugins that this application uses. (see [below for nested schema](#nestedatt--plugins))
 - `project_id` (String)
 
 <a id="nestedatt--git"></a>
@@ -39,3 +40,12 @@ Read-Only:
 - `path` (String) The relative path from the root of repository to the application directory.
 - `remote` (String)
 - `repository_id` (String) The repository ID. One the registered repositories in the piped configuration.
+
+
+<a id="nestedatt--plugins"></a>
+### Nested Schema for `plugins`
+
+Read-Only:
+
+- `deploy_targets` (List of String) The list of deploy targets that this plugin uses.
+- `name` (String) The name of the plugin.

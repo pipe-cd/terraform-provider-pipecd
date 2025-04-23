@@ -16,6 +16,7 @@ package provider
 
 import (
 	"context"
+	"sort"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -25,7 +26,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 
 	api "github.com/pipe-cd/pipecd/pkg/app/server/service/apiservice"
 	"github.com/pipe-cd/pipecd/pkg/model"
@@ -46,19 +46,25 @@ type ApplicationResource struct {
 
 type (
 	applicationResourceModel struct {
-		ID               types.String                `tfsdk:"id"`
-		Name             types.String                `tfsdk:"name"`
-		PipedID          types.String                `tfsdk:"piped_id"`
-		Kind             types.String                `tfsdk:"kind"`
-		PlatformProvider types.String                `tfsdk:"platform_provider"`
-		Description      types.String                `tfsdk:"description"`
-		Git              applicationResourceGitModel `tfsdk:"git"`
+		ID               types.String                     `tfsdk:"id"`
+		Name             types.String                     `tfsdk:"name"`
+		PipedID          types.String                     `tfsdk:"piped_id"`
+		Kind             types.String                     `tfsdk:"kind"`
+		PlatformProvider types.String                     `tfsdk:"platform_provider"`
+		Plugins          []applicationReSourcePluginModel `tfsdk:"plugins"`
+		Description      types.String                     `tfsdk:"description"`
+		Git              applicationResourceGitModel      `tfsdk:"git"`
 	}
 
 	applicationResourceGitModel struct {
 		RepositoryID types.String `tfsdk:"repository_id"`
 		Path         types.String `tfsdk:"path"`
 		Filename     types.String `tfsdk:"filename"`
+	}
+
+	applicationReSourcePluginModel struct {
+		Name          types.String   `tfsdk:"name"`
+		DeployTargets []types.String `tfsdk:"deploy_targets"`
 	}
 )
 
@@ -88,6 +94,22 @@ func (a *ApplicationResource) ImportState(ctx context.Context, req resource.Impo
 			Filename:     types.StringValue(getResp.Application.GitPath.ConfigFilename),
 		},
 	}
+
+	if len(getResp.Application.DeployTargetsByPlugin) != 0 {
+		plugins := make([]applicationReSourcePluginModel, 0, len(getResp.Application.DeployTargetsByPlugin))
+		for k, v := range getResp.Application.DeployTargetsByPlugin {
+			deployTargets := make([]types.String, 0, len(v.DeployTargets))
+			for _, dt := range v.DeployTargets {
+				deployTargets = append(deployTargets, types.StringValue(dt))
+			}
+			plugins = append(plugins, applicationReSourcePluginModel{
+				Name:          types.StringValue(k),
+				DeployTargets: deployTargets,
+			})
+		}
+		state.Plugins = plugins
+	}
+
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 }
@@ -136,8 +158,26 @@ func (a *ApplicationResource) Schema(_ context.Context, _ resource.SchemaRequest
 				},
 			},
 			"platform_provider": schema.StringAttribute{
-				Description: "The platform provider name. One of the registered providers in the piped configuration. The previous name of this field is cloud-provider.",
-				Required:    true,
+				Description:        "The platform provider name. One of the registered providers in the piped configuration. The previous name of this field is cloud-provider.",
+				Optional:           true,
+				DeprecationMessage: "Use `plugins` instead. This field will be removed in the next major version.",
+			},
+			"plugins": schema.ListNestedAttribute{
+				Description: "The list of plugins that this application uses.",
+				Optional:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Description: "The name of the plugin.",
+							Required:    true,
+						},
+						"deploy_targets": schema.ListAttribute{
+							Description: "The list of deploy targets that this plugin uses.",
+							Required:    true,
+							ElementType: types.StringType,
+						},
+					},
+				},
 			},
 			"description": schema.StringAttribute{
 				Description: "The description of the application.",
@@ -186,16 +226,48 @@ func (a *applicationResourceModel) application() *model.Application {
 		ConfigFilename: a.Git.Filename.ValueString(),
 	}
 	kind := model.ApplicationKind_value[a.Kind.ValueString()]
+	deployTargetsByPlugin := make(map[string]*model.DeployTargets)
+	for _, plugin := range a.Plugins {
+		deployTargets := make([]string, 0, len(plugin.DeployTargets))
+		for _, dt := range plugin.DeployTargets {
+			deployTargets = append(deployTargets, dt.ValueString())
+		}
+		deployTargetsByPlugin[plugin.Name.ValueString()] = &model.DeployTargets{
+			DeployTargets: deployTargets,
+		}
+	}
 	app := &model.Application{
-		Id:               a.ID.ValueString(),
-		Name:             a.Name.ValueString(),
-		PipedId:          a.PipedID.ValueString(),
-		GitPath:          git,
-		Kind:             model.ApplicationKind(kind),
-		PlatformProvider: a.PlatformProvider.ValueString(),
-		Description:      a.Description.ValueString(),
+		Id:                    a.ID.ValueString(),
+		Name:                  a.Name.ValueString(),
+		PipedId:               a.PipedID.ValueString(),
+		GitPath:               git,
+		Kind:                  model.ApplicationKind(kind),
+		PlatformProvider:      a.PlatformProvider.ValueString(),
+		DeployTargetsByPlugin: deployTargetsByPlugin,
+		Description:           a.Description.ValueString(),
 	}
 	return app
+}
+
+func plugins(plugins map[string]*model.DeployTargets) []applicationReSourcePluginModel {
+	if len(plugins) == 0 {
+		return nil
+	}
+	pluginsList := make([]applicationReSourcePluginModel, 0, len(plugins))
+	for k, v := range plugins {
+		deployTargets := make([]types.String, 0, len(v.DeployTargets))
+		for _, dt := range v.DeployTargets {
+			deployTargets = append(deployTargets, types.StringValue(dt))
+		}
+		pluginsList = append(pluginsList, applicationReSourcePluginModel{
+			Name:          types.StringValue(k),
+			DeployTargets: deployTargets,
+		})
+	}
+	sort.Slice(pluginsList, func(i, j int) bool {
+		return pluginsList[i].Name.ValueString() < pluginsList[j].Name.ValueString()
+	})
+	return pluginsList
 }
 
 func (a *ApplicationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -225,6 +297,20 @@ func (a *ApplicationResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
+	if len(app.DeployTargetsByPlugin) != 0 {
+		updateReq := &api.UpdateApplicationDeployTargetsRequest{
+			ApplicationId:         addResp.ApplicationId,
+			DeployTargetsByPlugin: app.DeployTargetsByPlugin,
+		}
+		if _, err := a.c.UpdateApplicationDeployTargets(ctx, updateReq); err != nil {
+			resp.Diagnostics.AddError(
+				"Error updating application deploy targets",
+				"Could not update application deploy targets, unexpected error: "+err.Error(),
+			)
+			return
+		}
+	}
+
 	getReq := &api.GetApplicationRequest{
 		ApplicationId: addResp.ApplicationId,
 	}
@@ -237,14 +323,13 @@ func (a *ApplicationResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	tflog.Debug(ctx, "AddApplication response", map[string]interface{}{"response_fields": getResp})
-
 	state := applicationResourceModel{
 		ID:               types.StringValue(addResp.ApplicationId),
 		Name:             types.StringValue(getResp.Application.Name),
 		PipedID:          types.StringValue(getResp.Application.PipedId),
 		Kind:             types.StringValue(getResp.Application.Kind.String()),
 		PlatformProvider: types.StringValue(getResp.Application.PlatformProvider),
+		Plugins:          plugins(getResp.Application.DeployTargetsByPlugin),
 		Description:      types.StringValue(getResp.Application.Description),
 		Git: applicationResourceGitModel{
 			RepositoryID: types.StringValue(getResp.Application.GitPath.Repo.Id),
@@ -252,6 +337,7 @@ func (a *ApplicationResource) Create(ctx context.Context, req resource.CreateReq
 			Filename:     types.StringValue(getResp.Application.GitPath.ConfigFilename),
 		},
 	}
+
 	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 }
@@ -275,6 +361,14 @@ func (a *ApplicationResource) Update(ctx context.Context, req resource.UpdateReq
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	if plan.application().PlatformProvider == "" && len(plan.Plugins) == 0 {
+		resp.Diagnostics.AddError(
+			"Error updating application",
+			"The application must have at least one plugin or platform provider.",
+		)
+	}
+
 	updateReq := &api.UpdateApplicationRequest{
 		ApplicationId:    plan.application().Id,
 		PipedId:          plan.application().PipedId,
@@ -288,6 +382,21 @@ func (a *ApplicationResource) Update(ctx context.Context, req resource.UpdateReq
 		)
 		return
 	}
+
+	if len(plan.application().DeployTargetsByPlugin) != 0 {
+		updateReq := &api.UpdateApplicationDeployTargetsRequest{
+			ApplicationId:         plan.application().Id,
+			DeployTargetsByPlugin: plan.application().DeployTargetsByPlugin,
+		}
+		if _, err := a.c.UpdateApplicationDeployTargets(ctx, updateReq); err != nil {
+			resp.Diagnostics.AddError(
+				"Error updating application deploy targets",
+				"Could not update application deploy targets, unexpected error: "+err.Error(),
+			)
+			return
+		}
+	}
+
 	diags = resp.State.Set(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 }

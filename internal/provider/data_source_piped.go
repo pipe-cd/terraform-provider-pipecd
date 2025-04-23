@@ -16,6 +16,7 @@ package provider
 
 import (
 	"context"
+	"sort"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -45,6 +46,7 @@ type (
 		ProjectID         types.String                           `tfsdk:"project_id"`
 		Repositories      []pipedDataSourceRepositoryModel       `tfsdk:"repositories"`
 		PlatformProviders []pipedDataSourcePlatformProviderModel `tfsdk:"platform_providers"`
+		Plugins           []pipedDataSourcePluginModel           `tfsdk:"plugins"`
 	}
 
 	pipedDataSourceRepositoryModel struct {
@@ -56,6 +58,11 @@ type (
 	pipedDataSourcePlatformProviderModel struct {
 		Name types.String `tfsdk:"name"`
 		Type types.String `tfsdk:"type"`
+	}
+
+	pipedDataSourcePluginModel struct {
+		Name          types.String   `tfsdk:"name"`
+		DeployTargets []types.String `tfsdk:"deploy_targets"`
 	}
 )
 
@@ -108,6 +115,24 @@ func (p *pipedDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 						},
 					},
 				},
+				DeprecationMessage: "Use `plugins` instead. This field will be removed in the next major version.",
+			},
+			"plugins": schema.ListNestedAttribute{
+				Description: "The list of plugins that this piped uses.",
+				Computed:    true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Computed:    true,
+							Description: "The name of the plugin.",
+						},
+						"deploy_targets": schema.ListAttribute{
+							Computed:    true,
+							ElementType: types.StringType,
+							Description: "The list of deploy targets that this plugin uses.",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -141,30 +166,52 @@ func (p *pipedDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 
-	repos := make([]pipedDataSourceRepositoryModel, 0, len(getResp.Piped.Repositories))
-	for _, r := range getResp.Piped.Repositories {
-		repos = append(repos, pipedDataSourceRepositoryModel{
-			ID:     types.StringValue(r.Id),
-			Remote: types.StringValue(r.Remote),
-			Branch: types.StringValue(r.Branch),
-		})
-	}
-
-	providers := make([]pipedDataSourcePlatformProviderModel, 0, len(getResp.Piped.PlatformProviders))
-	for _, p := range getResp.Piped.PlatformProviders {
-		providers = append(providers, pipedDataSourcePlatformProviderModel{
-			Name: types.StringValue(p.Name),
-			Type: types.StringValue(p.Type),
-		})
-	}
-
 	state = pipedDataSourceModel{
-		ID:                types.StringValue(getResp.Piped.Id),
-		Name:              types.StringValue(getResp.Piped.Name),
-		ProjectID:         types.StringValue(getResp.Piped.ProjectId),
-		Description:       types.StringValue(getResp.Piped.Desc),
-		Repositories:      repos,
-		PlatformProviders: providers,
+		ID:          types.StringValue(getResp.Piped.Id),
+		Name:        types.StringValue(getResp.Piped.Name),
+		ProjectID:   types.StringValue(getResp.Piped.ProjectId),
+		Description: types.StringValue(getResp.Piped.Desc),
+	}
+
+	if len(getResp.Piped.Repositories) != 0 {
+		repos := make([]pipedDataSourceRepositoryModel, 0, len(getResp.Piped.Repositories))
+		for _, r := range getResp.Piped.Repositories {
+			repos = append(repos, pipedDataSourceRepositoryModel{
+				ID:     types.StringValue(r.Id),
+				Remote: types.StringValue(r.Remote),
+				Branch: types.StringValue(r.Branch),
+			})
+		}
+		state.Repositories = repos
+	}
+
+	if len(getResp.Piped.PlatformProviders) != 0 {
+		providers := make([]pipedDataSourcePlatformProviderModel, 0, len(getResp.Piped.PlatformProviders))
+		for _, p := range getResp.Piped.PlatformProviders {
+			providers = append(providers, pipedDataSourcePlatformProviderModel{
+				Name: types.StringValue(p.Name),
+				Type: types.StringValue(p.Type),
+			})
+		}
+		state.PlatformProviders = providers
+	}
+
+	if len(getResp.Piped.Plugins) != 0 {
+		plugins := make([]pipedDataSourcePluginModel, 0, len(getResp.Piped.Plugins))
+		for _, p := range getResp.Piped.Plugins {
+			deployTargets := make([]types.String, 0, len(p.DeployTargets))
+			for _, dt := range p.DeployTargets {
+				deployTargets = append(deployTargets, types.StringValue(dt))
+			}
+			plugins = append(plugins, pipedDataSourcePluginModel{
+				Name:          types.StringValue(p.Name),
+				DeployTargets: deployTargets,
+			})
+		}
+		sort.Slice(plugins, func(i, j int) bool {
+			return plugins[i].Name.ValueString() < plugins[j].Name.ValueString()
+		})
+		state.Plugins = plugins
 	}
 
 	diags = resp.State.Set(ctx, &state)
