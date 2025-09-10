@@ -13,7 +13,7 @@ require (
 	github.com/hashicorp/terraform-plugin-testing v1.13.3
 	github.com/pipe-cd/pipecd v0.50.2
 	go.uber.org/mock v0.6.0
-	google.golang.org/grpc v1.75.0
+	google.golang.org/grpc v1.75.1
 )
 
 require (
