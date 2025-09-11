@@ -79,8 +79,8 @@ func (a *ApplicationResource) ImportState(ctx context.Context, req resource.Impo
 		ID:               types.StringValue(req.ID),
 		Name:             types.StringValue(getResp.Application.Name),
 		PipedID:          types.StringValue(getResp.Application.PipedId),
-		Kind:             types.StringValue(getResp.Application.Kind.String()),
-		PlatformProvider: types.StringValue(getResp.Application.PlatformProvider),
+		Kind:             types.StringValue(getResp.Application.Kind.String()),    //nolint:staticcheck
+		PlatformProvider: types.StringValue(getResp.Application.PlatformProvider), //nolint:staticcheck
 		Description:      types.StringValue(getResp.Application.Description),
 		Git: applicationResourceGitModel{
 			RepositoryID: types.StringValue(getResp.Application.GitPath.Repo.Id),
@@ -211,8 +211,8 @@ func (a *ApplicationResource) Create(ctx context.Context, req resource.CreateReq
 		Name:             app.Name,
 		PipedId:          app.PipedId,
 		GitPath:          app.GitPath,
-		Kind:             app.Kind,
-		PlatformProvider: app.PlatformProvider,
+		Kind:             app.Kind,             //nolint:staticcheck
+		PlatformProvider: app.PlatformProvider, //nolint:staticcheck
 		Description:      app.Description,
 	}
 
@@ -243,8 +243,8 @@ func (a *ApplicationResource) Create(ctx context.Context, req resource.CreateReq
 		ID:               types.StringValue(addResp.ApplicationId),
 		Name:             types.StringValue(getResp.Application.Name),
 		PipedID:          types.StringValue(getResp.Application.PipedId),
-		Kind:             types.StringValue(getResp.Application.Kind.String()),
-		PlatformProvider: types.StringValue(getResp.Application.PlatformProvider),
+		Kind:             types.StringValue(getResp.Application.Kind.String()),    //nolint:staticcheck
+		PlatformProvider: types.StringValue(getResp.Application.PlatformProvider), //nolint:staticcheck
 		Description:      types.StringValue(getResp.Application.Description),
 		Git: applicationResourceGitModel{
 			RepositoryID: types.StringValue(getResp.Application.GitPath.Repo.Id),
@@ -278,7 +278,7 @@ func (a *ApplicationResource) Update(ctx context.Context, req resource.UpdateReq
 	updateReq := &api.UpdateApplicationRequest{
 		ApplicationId:    plan.application().Id,
 		PipedId:          plan.application().PipedId,
-		PlatformProvider: plan.application().PlatformProvider,
+		PlatformProvider: plan.application().PlatformProvider, //nolint:staticcheck
 		GitPath:          plan.application().GitPath,
 	}
 	if _, err := a.c.UpdateApplication(ctx, updateReq); err != nil {

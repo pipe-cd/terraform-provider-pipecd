@@ -462,6 +462,26 @@ func (mr *MockAPIClientMockRecorder) UpdateApplication(ctx, in any, opts ...any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateApplication", reflect.TypeOf((*MockAPIClient)(nil).UpdateApplication), varargs...)
 }
 
+// UpdateApplicationDeployTargets mocks base method.
+func (m *MockAPIClient) UpdateApplicationDeployTargets(ctx context.Context, in *apiservice.UpdateApplicationDeployTargetsRequest, opts ...grpc.CallOption) (*apiservice.UpdateApplicationDeployTargetsResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpdateApplicationDeployTargets", varargs...)
+	ret0, _ := ret[0].(*apiservice.UpdateApplicationDeployTargetsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateApplicationDeployTargets indicates an expected call of UpdateApplicationDeployTargets.
+func (mr *MockAPIClientMockRecorder) UpdateApplicationDeployTargets(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateApplicationDeployTargets", reflect.TypeOf((*MockAPIClient)(nil).UpdateApplicationDeployTargets), varargs...)
+}
+
 // UpdatePiped mocks base method.
 func (m *MockAPIClient) UpdatePiped(ctx context.Context, in *apiservice.UpdatePipedRequest, opts ...grpc.CallOption) (*apiservice.UpdatePipedResponse, error) {
 	m.ctrl.T.Helper()

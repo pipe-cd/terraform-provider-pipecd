@@ -155,8 +155,8 @@ func (a *applicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 		Name:             types.StringValue(getResp.Application.Name),
 		PipedID:          types.StringValue(getResp.Application.PipedId),
 		ProjectID:        types.StringValue(getResp.Application.ProjectId),
-		Kind:             types.StringValue(getResp.Application.Kind.String()),
-		PlatformProvider: types.StringValue(getResp.Application.PlatformProvider),
+		Kind:             types.StringValue(getResp.Application.Kind.String()),    //nolint:staticcheck
+		PlatformProvider: types.StringValue(getResp.Application.PlatformProvider), //nolint:staticcheck
 		Description:      types.StringValue(getResp.Application.Description),
 		Git: &applicationDataSourceGitModel{
 			RepositoryID: types.StringValue(getResp.Application.GitPath.Repo.Id),
