@@ -150,8 +150,8 @@ func (p *pipedDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		})
 	}
 
-	providers := make([]pipedDataSourcePlatformProviderModel, 0, len(getResp.Piped.PlatformProviders))
-	for _, p := range getResp.Piped.PlatformProviders {
+	providers := make([]pipedDataSourcePlatformProviderModel, 0, len(getResp.Piped.PlatformProviders)) //nolint:staticcheck
+	for _, p := range getResp.Piped.PlatformProviders {                                                //nolint:staticcheck
 		providers = append(providers, pipedDataSourcePlatformProviderModel{
 			Name: types.StringValue(p.Name),
 			Type: types.StringValue(p.Type),

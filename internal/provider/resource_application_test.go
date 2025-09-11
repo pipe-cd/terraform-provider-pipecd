@@ -52,8 +52,8 @@ func TestAccResourceApplication(t *testing.T) {
 		Name:             app.Name,
 		PipedId:          app.PipedId,
 		GitPath:          app.GitPath,
-		Kind:             app.Kind,
-		PlatformProvider: app.PlatformProvider,
+		Kind:             app.Kind,             //nolint:staticcheck
+		PlatformProvider: app.PlatformProvider, //nolint:staticcheck
 		Description:      app.Description,
 	}
 	addResp := &apiservice.AddApplicationResponse{ApplicationId: appID}
